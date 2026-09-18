@@ -1,0 +1,85 @@
+/*
+ * Copyright 2026 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.mcpjava.server.tools;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Designates a parameter of a {@link Tool} method whose value clients must mirror into an HTTP
+ * request header.
+ * <p>
+ * The designation is published in the tool's JSON Schema as the {@code x-mcp-header} keyword on
+ * the parameter's property schema. When a client calls the tool over the Streamable HTTP
+ * transport, it sends the argument value in the {@code Mcp-Param-<value>} header in addition to
+ * the request body, so that intermediaries such as gateways and load balancers can route or
+ * inspect the call without parsing the body.
+ * <p>
+ * This annotation only affects the Streamable HTTP transport, and only when the client and server
+ * have negotiated a protocol version that supports it. It is kept separate from {@link ToolArg}
+ * for that reason; the two are used together:
+ *
+ * <pre>{@code
+ * @Tool(name = "getOrders")
+ * List<Order> getOrders(
+ *         @ToolArg(name = "tenant") @McpParamHeader("Tenant-Id") String tenant,
+ *         @ToolArg(name = "status") String status) {
+ *     ...
+ * }
+ * }</pre>
+ *
+ * <h2>Constraints</h2>
+ * The specification places the following constraints on the designation:
+ * <ul>
+ * <li>{@link #value()} must not be empty;
+ * <li>{@link #value()} must contain only ASCII characters, excluding space and {@code :};
+ * <li>{@link #value()} must be unique, ignoring case, among the parameters of a single tool;
+ * <li>the annotated parameter must be of a primitive JSON Schema type: {@code integer},
+ * {@code string} or {@code boolean}. {@code number} is not permitted, so parameters of type
+ * {@code float}, {@code double} or {@link java.math.BigDecimal}, for example, cannot be
+ * designated.
+ * </ul>
+ * <p>
+ * Clients must exclude a tool whose designation violates these constraints from the tools they
+ * make available, rather than report an error. Implementations should therefore validate the
+ * designation when the tool is registered, so that a mistake is reported to the developer instead
+ * of the tool silently disappearing from clients.
+ * <p>
+ * The header value travels in plain view of every intermediary, which may log it. Avoid
+ * designating parameters that carry sensitive data, such as passwords, API keys, tokens or
+ * personal information.
+ *
+ * @see ToolArg
+ * @see <a href="https://modelcontextprotocol.io/specification/2026-07-28/server/tools#custom-headers">MCP
+ * Specification - Tools - Custom Headers</a>
+ */
+@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface McpParamHeader {
+
+    /**
+     * The header name carried by the {@code x-mcp-header} keyword.
+     * <p>
+     * Clients send the argument value in the {@code Mcp-Param-<value>} request header.
+     *
+     * @return the header name
+     */
+    String value();
+}
