@@ -33,16 +33,48 @@ import java.lang.annotation.Target;
  * <p>
  * This annotation only affects the Streamable HTTP transport, and only when the client and server
  * have negotiated a protocol version that supports it. It is kept separate from {@link ToolArg}
- * for that reason; the two are used together:
+ * for that reason, and the two sit on the same parameter. {@link ToolArg} describes the property
+ * — its name, its description, whether it is required — and this annotation adds the
+ * {@code x-mcp-header} keyword to that same property. Neither is restated here, so that each
+ * field of a property's schema has exactly one source.
  *
  * <pre>{@code
- * @Tool(name = "getOrders")
- * List<Order> getOrders(
- *         @ToolArg(name = "tenant") @McpParamHeader("Tenant-Id") String tenant,
- *         @ToolArg(name = "status") String status) {
+ * @Tool(name = "execute_sql", description = "Execute SQL on Google Cloud Spanner")
+ * List<Row> executeSql(
+ *         @ToolArg(description = "The region to execute the query in")
+ *         @McpParamHeader("Region") String region,
+ *         @ToolArg(description = "The SQL query to execute") String query) {
  *     ...
  * }
  * }</pre>
+ *
+ * is published as:
+ *
+ * <pre>{@code
+ * {
+ *   "name": "execute_sql",
+ *   "description": "Execute SQL on Google Cloud Spanner",
+ *   "inputSchema": {
+ *     "type": "object",
+ *     "properties": {
+ *       "region": {
+ *         "type": "string",
+ *         "description": "The region to execute the query in",
+ *         "x-mcp-header": "Region"
+ *       },
+ *       "query": {
+ *         "type": "string",
+ *         "description": "The SQL query to execute"
+ *       }
+ *     },
+ *     "required": ["region", "query"]
+ *   }
+ * }
+ * }</pre>
+ *
+ * Both parameters appear in {@code required} because {@link ToolArg#required()} defaults to
+ * {@code true}, and {@code region} carries its description and its header designation from the
+ * two annotations it is given.
  *
  * <h2>Constraints</h2>
  * The specification places the following constraints on the designation:
