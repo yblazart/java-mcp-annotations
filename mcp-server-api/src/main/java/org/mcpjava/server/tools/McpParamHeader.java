@@ -107,11 +107,18 @@ import java.lang.annotation.Target;
 public @interface McpParamHeader {
 
     /**
-     * The header name carried by the {@code x-mcp-header} keyword.
+     * The name appended to {@code Mcp-Param-} to make the request header name.
      * <p>
-     * Clients send the argument value in the {@code Mcp-Param-<value>} request header.
+     * This value is used for the {@code x-mcp-header} property in the parameter schema, which instructs clients to send the argument
+     * value in an {@code Mcp-Param-<value>} request header.
+     * <p>
+     * This value must be:
+     * <ul>
+     * <li>A valid HTTP header name (see <a href="https://datatracker.ietf.org/doc/html/rfc9110#section-5.1">RFC 9110 Section 5.1</a>)
+     * <li>Case-insensitively unique among the parameters of the tool
+     * </ul>
      *
-     * @return the header name
+     * @return the header name suffix
      */
     String value();
 }
